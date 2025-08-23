@@ -1,5 +1,5 @@
 require('dotenv').config();
-const TelegramBotApp = require('./app');
+const { TelegramBotApp } = require('./app');
 
 // Создаем экземпляр приложения бота
 const botApp = new TelegramBotApp(process.env.BOT_TOKEN);
