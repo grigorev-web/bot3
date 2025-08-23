@@ -1,8 +1,8 @@
 /**
  * @fileoverview Обработчик текстовых сообщений Telegram бота
- * @description Обрабатывает текстовые сообщения пользователей с простой логикой
+ * @description Обрабатывает текстовые сообщения пользователей через простой роутер
  * @author Telegram Bot Team
- * @version 2.0.0
+ * @version 3.0.0
  * @since 2024-01-01
  */
 
@@ -15,7 +15,7 @@
 
 /**
  * @class TextMessageHandler
- * @description Простой класс для обработки текстовых сообщений
+ * @description Простой класс для обработки текстовых сообщений через роутер
  * @example
  * const textHandler = new TextMessageHandler(bot);
  * if (textHandler.canHandle(message)) {
@@ -34,7 +34,7 @@ class TextMessageHandler {
     }
     
     this.bot = bot;
-    this.llmService = null; // Ленивая загрузка LLM
+    this.router = null; // Ленивая загрузка роутера
     
     console.log('🔧 TextMessageHandler инициализирован');
   }
@@ -58,8 +58,8 @@ class TextMessageHandler {
         return false;
       }
       
-      // Обрабатываем текст через LLM (ленивая загрузка)
-      const response = await this.processTextWithLLM(text);
+      // Обрабатываем текст через роутер (ленивая загрузка)
+      const response = await this.processTextWithRouter(text);
       
       // Отправляем ответ пользователю
       await this.sendResponse(chatId, response);
@@ -98,59 +98,56 @@ class TextMessageHandler {
 
   /**
    * @group Text Processing
-   * @description Обрабатывает текст через LLM (ленивая загрузка)
+   * @description Обрабатывает текст через роутер (ленивая загрузка)
    * @param {string} text - Текст для обработки
-   * @returns {Promise<string>} Ответ от LLM или fallback
+   * @returns {Promise<string>} Ответ от роутера
    * @private
    */
-  async processTextWithLLM(text) {
+  async processTextWithRouter(text) {
     try {
-      // Ленивая загрузка LLM сервиса
-      if (!this.llmService) {
-        this.llmService = await this.createLLMService();
+      // Ленивая загрузка роутера
+      if (!this.router) {
+        this.router = await this.createRouter();
       }
       
-      if (this.llmService) {
-        // Пытаемся получить ответ от LLM
-        const response = await this.llmService.generateResponse(text);
-        if (response && response.content) {
-          return response.content;
+      if (this.router) {
+        // Получаем ответ от роутера
+        const response = await this.router.processText(text);
+        if (response) {
+          return response;
         }
       }
       
-      // Fallback ответ если LLM недоступен
+      // Fallback ответ если роутер недоступен
       return this.getDefaultResponse(text);
       
     } catch (error) {
-      console.warn('⚠️ LLM недоступен, использую fallback:', error.message);
+      console.warn('⚠️ Роутер недоступен, использую fallback:', error.message);
       return this.getDefaultResponse(text);
     }
   }
 
   /**
-   * @group LLM Service Creation
-   * @description Создает LLM сервис при необходимости
-   * @returns {Promise<Object|null>} LLM сервис или null если недоступен
+   * @group Router Creation
+   * @description Создает роутер при необходимости
+   * @returns {Promise<Object|null>} Роутер или null если недоступен
    * @private
    */
-  async createLLMService() {
+  async createRouter() {
     try {
-      console.log('🚀 Создаю LLM сервис...');
+      console.log('🚀 Создаю роутер...');
       
-      // Динамически импортируем LLM сервис
-      const { LLMService } = require('../services');
+      // Динамически импортируем роутер
+      const { SimpleRouter } = require('../modules/router');
       
-      // Создаем сервис (он сам разберется с конфигурацией)
-      const service = new LLMService();
+      // Создаем роутер
+      const router = new SimpleRouter();
       
-      // Инициализируем сервис
-      await service.initialize();
-      
-      console.log('✅ LLM сервис создан и готов к работе');
-      return service;
+      console.log('✅ Роутер создан и готов к работе');
+      return router;
       
     } catch (error) {
-      console.warn('⚠️ Не удалось создать LLM сервис:', error.message);
+      console.warn('⚠️ Не удалось создать роутер:', error.message);
       return null;
     }
   }
@@ -196,13 +193,13 @@ class TextMessageHandler {
 
   /**
    * @group Fallback Responses
-   * @description Возвращает стандартный ответ если LLM недоступен
+   * @description Возвращает стандартный ответ если роутер недоступен
    * @param {string} text - Исходный текст пользователя
    * @returns {string} Стандартный ответ
    * @private
    */
   getDefaultResponse(text) {
-    // Простые правила без LLM
+    // Простые правила без роутера
     if (/(привет|здравствуй|hi|hello)/i.test(text)) {
       return 'Привет! 👋 Чем могу помочь?';
     }
@@ -226,9 +223,9 @@ class TextMessageHandler {
   getModuleInfo() {
     return {
       name: 'Text Message Handler',
-      version: '2.0.0',
-      hasLLM: !!this.llmService,
-      llmStatus: this.llmService ? 'ready' : 'not_loaded'
+      version: '3.0.0',
+      hasRouter: !!this.router,
+      routerStatus: this.router ? 'ready' : 'not_loaded'
     };
   }
 
@@ -239,8 +236,8 @@ class TextMessageHandler {
    */
   getStats() {
     return {
-      hasLLM: !!this.llmService,
-      llmStatus: this.llmService ? 'ready' : 'not_loaded'
+      hasRouter: !!this.router,
+      routerStatus: this.router ? 'ready' : 'not_loaded'
     };
   }
 }

@@ -1,21 +1,21 @@
 /**
  * @fileoverview Индексный файл для модуля роутера
- * @description Экспортирует умный роутер с LLM классификацией
+ * @description Экспортирует простой роутер для обработки сообщений
  * @author Telegram Bot Team
- * @version 2.0.0
+ * @version 3.0.0
  * @since 2024-01-01
  */
 
-const SmartRouter = require('./router');
+const SimpleRouter = require('./router');
 
 /**
  * @module router
- * @description Модуль умного роутинга с LLM классификацией сообщений
+ * @description Модуль простого роутинга сообщений
  */
 module.exports = {
   /**
-   * @type {SmartRouter}
-   * @description Умный роутер с LLM классификацией
+   * @type {SimpleRouter}
+   * @description Простой роутер для обработки сообщений
    */
-  SmartRouter
+  SimpleRouter
 };
