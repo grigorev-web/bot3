@@ -44,6 +44,7 @@ related_files: [src/app/app.js, src/handlers/index.js]
 - [Эндпоинты](api/endpoints.md)
 - [Аутентификация](api/authentication.md)
 - [Примеры запросов](api/examples.md)
+- [Интеграция с ProxyAPI](api/proxyapi-integration.md)
 
 ### 📖 Руководства
 - [Обработка сообщений](guides/message-handling.md)
@@ -52,7 +53,7 @@ related_files: [src/app/app.js, src/handlers/index.js]
 - [Логирование и отладка](guides/logging-debugging.md)
 
 ### 💡 Примеры
-- [Базовые примеры](examples/basic-examples.md)
+- [Базовые примеры](examples/basic-usage.md)
 - [Продвинутые сценарии](examples/advanced-scenarios.md)
 - [Интеграции](examples/integrations.md)
 
