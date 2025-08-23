@@ -1,31 +1,30 @@
 /**
  * @fileoverview Основной класс приложения Telegram бота
- * @description Управляет жизненным циклом бота, обработчиками событий и сообщений
+ * @description Управляет жизненным циклом бота и обработкой сообщений
  * @author Telegram Bot Team
- * @version 1.0.0
+ * @version 2.0.0
  * @since 2024-01-01
- * @requires node-telegram-bot-api
- * @requires ../handlers
+ * @requires ../handlers/commandHandlers
+ * @requires ../handlers/textMessageHandler
+ * @requires ../handlers/mediaMessageHandler
+ * @requires ../handlers/eventHandlers
  */
 
 const TelegramBot = require('node-telegram-bot-api');
-const { 
-  CommandHandlers, 
-  TextMessageHandler, 
-  MediaMessageHandler, 
-  EventHandlers 
-} = require('../handlers');
+const CommandHandlers = require('../handlers/commandHandlers');
+const TextMessageHandler = require('../handlers/textMessageHandler');
+const MediaMessageHandler = require('../handlers/mediaMessageHandler');
+const EventHandlers = require('../handlers/eventHandlers');
 
 /**
  * @typedef {Object} BotConfig
- * @property {boolean} polling - Включить поллинг для получения обновлений
- * @property {number} [pollingTimeout] - Таймаут поллинга в секундах
- * @property {boolean} [webHook] - Использовать webhook вместо поллинга
+ * @property {boolean} [polling=true] - Включить polling режим
+ * @property {number} [pollingTimeout=10] - Таймаут polling в секундах
  */
 
 /**
  * @class TelegramBotApp
- * @description Основной класс приложения для управления Telegram ботом
+ * @description Основной класс приложения Telegram бота
  * @example
  * const botApp = new TelegramBotApp('YOUR_BOT_TOKEN');
  * botApp.start();
@@ -52,8 +51,8 @@ class TelegramBotApp {
     // Инициализируем экземпляр бота
     this.bot = new TelegramBot(token, this.config);
     
-    // Инициализируем обработчики (синхронно)
-    this.initializeHandlersSync();
+    // Инициализируем обработчики
+    this.initializeHandlers();
     
     // Настраиваем обработчики событий
     this.setupEventHandlers();
@@ -63,58 +62,16 @@ class TelegramBotApp {
 
   /**
    * @group Initialization
-   * @description Полная инициализация приложения с асинхронными компонентами
-   * @returns {Promise<boolean>} true если инициализация успешна
-   */
-  async initialize() {
-    try {
-      console.log('🚀 Полная инициализация приложения...');
-      
-      // Инициализируем асинхронные обработчики
-      await this.initializeHandlers();
-      
-      console.log('✅ Приложение полностью инициализировано');
-      return true;
-      
-    } catch (error) {
-      console.error('❌ Ошибка полной инициализации приложения:', error);
-      throw error;
-    }
-  }
-
-  /**
-   * @group Initialization
-   * @description Инициализирует все обработчики сообщений и событий синхронно
-   * @private
-   */
-  initializeHandlersSync() {
-    this.commandHandlers = new CommandHandlers(this.bot);
-    this.mediaMessageHandler = new MediaMessageHandler(this.bot);
-    this.eventHandlers = new EventHandlers(this.bot);
-    
-    // Создаем TextMessageHandler (инициализация будет асинхронной)
-    this.textMessageHandler = new TextMessageHandler(this.bot);
-    
-    console.log('✅ Все обработчики созданы');
-  }
-
-  /**
-   * @group Initialization
    * @description Инициализирует все обработчики сообщений и событий
    * @private
    */
-  async initializeHandlers() {
-    try {
-      // Инициализируем TextMessageHandler с умным роутером
-      if (this.textMessageHandler) {
-        await this.textMessageHandler.initialize();
-      }
-      
-      console.log('✅ Все обработчики инициализированы');
-    } catch (error) {
-      console.error('❌ Ошибка инициализации обработчиков:', error);
-      throw error;
-    }
+  initializeHandlers() {
+    this.commandHandlers = new CommandHandlers(this.bot);
+    this.mediaMessageHandler = new MediaMessageHandler(this.bot);
+    this.eventHandlers = new EventHandlers(this.bot);
+    this.textMessageHandler = new TextMessageHandler(this.bot);
+    
+    console.log('✅ Все обработчики созданы');
   }
 
   /**
@@ -169,14 +126,29 @@ class TelegramBotApp {
    * @private
    */
   setupSystemHandlers() {
-    // Обработчик ошибок поллинга
+    // Обработчик ошибок polling
     this.bot.on('polling_error', (error) => {
       this.eventHandlers.handlePollingError(error);
     });
 
-    // Обработчик успешного запуска поллинга
+    // Обработчик начала polling
     this.bot.on('polling_start', () => {
       this.eventHandlers.handlePollingStart();
+    });
+
+    // Обработчик остановки polling
+    this.bot.on('polling_stop', () => {
+      this.eventHandlers.handlePollingStop();
+    });
+
+    // Обработчик ошибок webhook
+    this.bot.on('webhook_error', (error) => {
+      this.eventHandlers.handleWebhookError(error);
+    });
+
+    // Обработчик общих ошибок
+    this.bot.on('error', (error) => {
+      this.eventHandlers.handleError(error);
     });
 
     console.log('✅ Системные обработчики настроены');
@@ -238,6 +210,43 @@ class TelegramBotApp {
   sendErrorMessage(chatId) {
     const errorMessage = '❌ Произошла ошибка при обработке вашего сообщения. Попробуйте позже.';
     this.bot.sendMessage(chatId, errorMessage);
+  }
+
+  /**
+   * @group Lifecycle Management
+   * @description Запускает бота
+   */
+  start() {
+    console.log('🚀 Запускаю бота...');
+    
+    // Проверяем, не запущен ли уже polling
+    if (this.bot.isPolling()) {
+      console.log('⚠️ Бот уже запущен, пропускаю запуск');
+      return;
+    }
+    
+    // Настраиваем обработчики ошибок поллинга
+    this.bot.on('polling_error', (error) => {
+      console.warn('⚠️ Ошибка поллинга (попытка переподключения):', error.message);
+      
+      // Если это критическая ошибка, пытаемся перезапустить поллинг
+      if (error.code === 'ECONNRESET' || error.code === 'ETIMEDOUT') {
+        console.log('🔄 Перезапускаю поллинг через 5 секунд...');
+        setTimeout(() => {
+          if (!this.bot.isPolling()) {
+            try {
+              this.bot.startPolling();
+              console.log('✅ Поллинг перезапущен');
+            } catch (restartError) {
+              console.error('❌ Не удалось перезапустить поллинг:', restartError.message);
+            }
+          }
+        }, 5000);
+      }
+    });
+    
+    this.bot.startPolling();
+    console.log('✅ Бот запущен');
   }
 
   /**
