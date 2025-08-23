@@ -1,8 +1,5 @@
 const TelegramBot = require('node-telegram-bot-api');
-const CommandHandlers = require('./commandHandlers');
-const TextMessageHandler = require('./textMessageHandler');
-const MediaMessageHandler = require('./mediaMessageHandler');
-const EventHandlers = require('./eventHandlers');
+const { CommandHandlers, TextMessageHandler, MediaMessageHandler, EventHandlers } = require('../handlers');
 
 class TelegramBotApp {
   constructor(token) {
