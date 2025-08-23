@@ -1,6 +1,9 @@
+const { Router } = require('../modules');
+
 class TextMessageHandler {
   constructor(bot) {
     this.bot = bot;
+    this.router = new Router();
   }
 
   handleTextMessage(msg) {
@@ -12,14 +15,20 @@ class TextMessageHandler {
       return false; // Сообщаем, что сообщение не обработано
     }
     
-    // Обрабатываем обычные текстовые сообщения
-    this.bot.sendMessage(chatId, `💬 Вы написали: "${text}"\n\nИспользуйте /help для получения списка команд.`);
+    // Используем модуль Router для обработки текста
+    const response = this.router.processText(text);
+    this.bot.sendMessage(chatId, response);
     return true; // Сообщаем, что сообщение обработано
   }
 
   // Метод для проверки, является ли сообщение текстовым
   canHandle(msg) {
     return msg.text && !msg.text.startsWith('/');
+  }
+
+  // Метод для получения информации о модуле
+  getModuleInfo() {
+    return this.router.getInfo();
   }
 }
 
