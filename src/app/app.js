@@ -1,74 +1,244 @@
-const TelegramBot = require('node-telegram-bot-api');
-const { CommandHandlers, TextMessageHandler, MediaMessageHandler, EventHandlers } = require('../handlers');
+/**
+ * @fileoverview Основной класс приложения Telegram бота
+ * @description Управляет жизненным циклом бота, обработчиками событий и сообщений
+ * @author Telegram Bot Team
+ * @version 1.0.0
+ * @since 2024-01-01
+ * @requires node-telegram-bot-api
+ * @requires ../handlers
+ */
 
+const TelegramBot = require('node-telegram-bot-api');
+const { 
+  CommandHandlers, 
+  TextMessageHandler, 
+  MediaMessageHandler, 
+  EventHandlers 
+} = require('../handlers');
+
+/**
+ * @typedef {Object} BotConfig
+ * @property {boolean} polling - Включить поллинг для получения обновлений
+ * @property {number} [pollingTimeout] - Таймаут поллинга в секундах
+ * @property {boolean} [webHook] - Использовать webhook вместо поллинга
+ */
+
+/**
+ * @class TelegramBotApp
+ * @description Основной класс приложения для управления Telegram ботом
+ * @example
+ * const botApp = new TelegramBotApp('YOUR_BOT_TOKEN');
+ * botApp.start();
+ */
 class TelegramBotApp {
-  constructor(token) {
-    this.bot = new TelegramBot(token, { polling: true });
+  /**
+   * @constructor
+   * @param {string} token - Токен бота от BotFather
+   * @param {BotConfig} [config] - Дополнительная конфигурация бота
+   * @throws {Error} Если токен не передан или недействителен
+   */
+  constructor(token, config = {}) {
+    if (!token) {
+      throw new Error('Токен бота обязателен для создания приложения');
+    }
+
+    this.token = token;
+    this.config = {
+      polling: true,
+      pollingTimeout: 10,
+      ...config
+    };
+
+    // Инициализируем экземпляр бота
+    this.bot = new TelegramBot(token, this.config);
     
     // Инициализируем обработчики
+    this.initializeHandlers();
+    
+    // Настраиваем обработчики событий
+    this.setupEventHandlers();
+    
+    console.log('🔧 Приложение Telegram бота инициализировано');
+  }
+
+  /**
+   * @group Initialization
+   * @description Инициализирует все обработчики сообщений и событий
+   * @private
+   */
+  initializeHandlers() {
     this.commandHandlers = new CommandHandlers(this.bot);
     this.textMessageHandler = new TextMessageHandler(this.bot);
     this.mediaMessageHandler = new MediaMessageHandler(this.bot);
     this.eventHandlers = new EventHandlers(this.bot);
     
-    this.setupEventHandlers();
+    console.log('✅ Все обработчики инициализированы');
   }
 
+  /**
+   * @group Event Handling
+   * @description Настраивает все обработчики событий бота
+   * @private
+   */
   setupEventHandlers() {
-    // Обработчики команд
+    this.setupCommandHandlers();
+    this.setupMessageHandlers();
+    this.setupSystemHandlers();
+    
+    console.log('✅ Обработчики событий настроены');
+  }
+
+  /**
+   * @group Command Handling
+   * @description Настраивает обработчики команд бота
+   * @private
+   */
+  setupCommandHandlers() {
+    // Обработчик команды /start
     this.bot.onText(/\/start/, (msg) => {
       this.commandHandlers.handleStart(msg);
     });
 
+    // Обработчик команды /help
     this.bot.onText(/\/help/, (msg) => {
       this.commandHandlers.handleHelp(msg);
     });
 
-    // Обработчик всех сообщений
+    console.log('✅ Обработчики команд настроены');
+  }
+
+  /**
+   * @group Message Handling
+   * @description Настраивает обработчики сообщений
+   * @private
+   */
+  setupMessageHandlers() {
+    // Обработчик всех входящих сообщений
     this.bot.on('message', (msg) => {
       this.handleMessage(msg);
     });
 
-    // Обработчик ошибок
+    console.log('✅ Обработчики сообщений настроены');
+  }
+
+  /**
+   * @group System Handling
+   * @description Настраивает системные обработчики
+   * @private
+   */
+  setupSystemHandlers() {
+    // Обработчик ошибок поллинга
     this.bot.on('polling_error', (error) => {
       this.eventHandlers.handlePollingError(error);
     });
 
-    // Обработчик успешного запуска
+    // Обработчик успешного запуска поллинга
     this.bot.on('polling_start', () => {
       this.eventHandlers.handlePollingStart();
     });
+
+    console.log('✅ Системные обработчики настроены');
   }
 
+  /**
+   * @group Message Processing
+   * @description Обрабатывает входящие сообщения в порядке приоритета
+   * @param {Object} msg - Объект сообщения от Telegram
+   * @returns {boolean} true если сообщение обработано, false в противном случае
+   * @private
+   */
   handleMessage(msg) {
-    // Сначала пробуем обработать как медиа
-    if (this.mediaMessageHandler.canHandle(msg)) {
-      if (this.mediaMessageHandler.handleMediaMessage(msg)) {
-        return;
-      }
-    }
-    
-    // Затем пробуем обработать как текстовое сообщение
-    if (this.textMessageHandler.canHandle(msg)) {
-      if (this.textMessageHandler.handleTextMessage(msg)) {
-        return;
-      }
-    }
-    
-    // Если ничего не подошло, отправляем общее сообщение
     const chatId = msg.chat.id;
-    this.bot.sendMessage(chatId, '✅ Получил ваше сообщение! Спасибо за обращение.');
+    
+    try {
+      // Сначала пробуем обработать как медиа
+      if (this.mediaMessageHandler.canHandle(msg)) {
+        if (this.mediaMessageHandler.handleMediaMessage(msg)) {
+          return true;
+        }
+      }
+      
+      // Затем пробуем обработать как текстовое сообщение
+      if (this.textMessageHandler.canHandle(msg)) {
+        if (this.textMessageHandler.handleTextMessage(msg)) {
+          return true;
+        }
+      }
+      
+      // Если ничего не подошло, отправляем общее сообщение
+      this.sendDefaultResponse(chatId);
+      return true;
+      
+    } catch (error) {
+      console.error('❌ Ошибка обработки сообщения:', error);
+      this.sendErrorMessage(chatId);
+      return false;
+    }
   }
 
+  /**
+   * @group Response Handling
+   * @description Отправляет стандартный ответ на необработанные сообщения
+   * @param {number} chatId - ID чата для отправки ответа
+   * @private
+   */
+  sendDefaultResponse(chatId) {
+    const response = '✅ Получил ваше сообщение! Спасибо за обращение.';
+    this.bot.sendMessage(chatId, response);
+  }
 
+  /**
+   * @group Response Handling
+   * @description Отправляет сообщение об ошибке
+   * @param {number} chatId - ID чата для отправки ответа
+   * @private
+   */
+  sendErrorMessage(chatId) {
+    const errorMessage = '❌ Произошла ошибка при обработке вашего сообщения. Попробуйте позже.';
+    this.bot.sendMessage(chatId, errorMessage);
+  }
 
+  /**
+   * @group Lifecycle Management
+   * @description Останавливает бота и освобождает ресурсы
+   */
   stop() {
-    this.eventHandlers.handlePollingStop();
-    this.bot.stopPolling();
+    console.log('🛑 Останавливаю приложение бота...');
+    
+    try {
+      this.eventHandlers.handlePollingStop();
+      this.bot.stopPolling();
+      console.log('✅ Бот успешно остановлен');
+    } catch (error) {
+      console.error('❌ Ошибка при остановке бота:', error);
+    }
   }
 
+  /**
+   * @group Accessors
+   * @description Возвращает экземпляр бота для внешнего использования
+   * @returns {TelegramBot} Экземпляр бота
+   */
   getBot() {
     return this.bot;
+  }
+
+  /**
+   * @group Accessors
+   * @description Возвращает информацию о состоянии приложения
+   * @returns {Object} Информация о состоянии
+   */
+  getStatus() {
+    return {
+      isRunning: this.bot.isPolling(),
+      token: this.token ? '***' + this.token.slice(-4) : 'не установлен',
+      handlers: {
+        commands: !!this.commandHandlers,
+        text: !!this.textMessageHandler,
+        media: !!this.mediaMessageHandler,
+        events: !!this.eventHandlers
+      }
+    };
   }
 }
 
