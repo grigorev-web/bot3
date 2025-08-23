@@ -1,22 +1,29 @@
 /**
- * @fileoverview Индексный файл для модуля модулей
- * @description Экспортирует все вспомогательные модули приложения
+ * @fileoverview Индексный файл для модулей
+ * @description Экспортирует все логические модули бота (роутер, классификатор и т.д.)
  * @author Telegram Bot Team
- * @version 1.0.0
+ * @version 2.0.0
  * @since 2024-01-01
  */
 
 // Экспортируем все модули
-const Router = require('./router');
+const { SmartRouter } = require('./router');
+const { MessageClassifier } = require('./classifier');
 
 /**
  * @module modules
- * @description Модуль вспомогательных компонентов приложения
+ * @description Модуль логических компонентов бота
  */
 module.exports = {
   /**
-   * @type {Router}
-   * @description Модуль роутинга для обработки текстовых сообщений
+   * @type {SmartRouter}
+   * @description Умный роутер с LLM классификацией сообщений
    */
-  Router
+  SmartRouter,
+  
+  /**
+   * @type {MessageClassifier}
+   * @description Классификатор сообщений с использованием LLM
+   */
+  MessageClassifier
 };

@@ -52,8 +52,8 @@ class TelegramBotApp {
     // Инициализируем экземпляр бота
     this.bot = new TelegramBot(token, this.config);
     
-    // Инициализируем обработчики
-    this.initializeHandlers();
+    // Инициализируем обработчики (синхронно)
+    this.initializeHandlersSync();
     
     // Настраиваем обработчики событий
     this.setupEventHandlers();
@@ -63,16 +63,58 @@ class TelegramBotApp {
 
   /**
    * @group Initialization
-   * @description Инициализирует все обработчики сообщений и событий
+   * @description Полная инициализация приложения с асинхронными компонентами
+   * @returns {Promise<boolean>} true если инициализация успешна
+   */
+  async initialize() {
+    try {
+      console.log('🚀 Полная инициализация приложения...');
+      
+      // Инициализируем асинхронные обработчики
+      await this.initializeHandlers();
+      
+      console.log('✅ Приложение полностью инициализировано');
+      return true;
+      
+    } catch (error) {
+      console.error('❌ Ошибка полной инициализации приложения:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * @group Initialization
+   * @description Инициализирует все обработчики сообщений и событий синхронно
    * @private
    */
-  initializeHandlers() {
+  initializeHandlersSync() {
     this.commandHandlers = new CommandHandlers(this.bot);
-    this.textMessageHandler = new TextMessageHandler(this.bot);
     this.mediaMessageHandler = new MediaMessageHandler(this.bot);
     this.eventHandlers = new EventHandlers(this.bot);
     
-    console.log('✅ Все обработчики инициализированы');
+    // Создаем TextMessageHandler (инициализация будет асинхронной)
+    this.textMessageHandler = new TextMessageHandler(this.bot);
+    
+    console.log('✅ Все обработчики созданы');
+  }
+
+  /**
+   * @group Initialization
+   * @description Инициализирует все обработчики сообщений и событий
+   * @private
+   */
+  async initializeHandlers() {
+    try {
+      // Инициализируем TextMessageHandler с умным роутером
+      if (this.textMessageHandler) {
+        await this.textMessageHandler.initialize();
+      }
+      
+      console.log('✅ Все обработчики инициализированы');
+    } catch (error) {
+      console.error('❌ Ошибка инициализации обработчиков:', error);
+      throw error;
+    }
   }
 
   /**
@@ -114,8 +156,8 @@ class TelegramBotApp {
    */
   setupMessageHandlers() {
     // Обработчик всех входящих сообщений
-    this.bot.on('message', (msg) => {
-      this.handleMessage(msg);
+    this.bot.on('message', async (msg) => {
+      await this.handleMessage(msg);
     });
 
     console.log('✅ Обработчики сообщений настроены');
@@ -147,7 +189,7 @@ class TelegramBotApp {
    * @returns {boolean} true если сообщение обработано, false в противном случае
    * @private
    */
-  handleMessage(msg) {
+  async handleMessage(msg) {
     const chatId = msg.chat.id;
     
     try {
