@@ -2,6 +2,7 @@ const TelegramBot = require('node-telegram-bot-api');
 const CommandHandlers = require('./commandHandlers');
 const TextMessageHandler = require('./textMessageHandler');
 const MediaMessageHandler = require('./mediaMessageHandler');
+const EventHandlers = require('./eventHandlers');
 
 class TelegramBotApp {
   constructor(token) {
@@ -11,6 +12,7 @@ class TelegramBotApp {
     this.commandHandlers = new CommandHandlers(this.bot);
     this.textMessageHandler = new TextMessageHandler(this.bot);
     this.mediaMessageHandler = new MediaMessageHandler(this.bot);
+    this.eventHandlers = new EventHandlers(this.bot);
     
     this.setupEventHandlers();
   }
@@ -25,18 +27,6 @@ class TelegramBotApp {
       this.commandHandlers.handleHelp(msg);
     });
 
-    this.bot.onText(/\/echo (.+)/, (msg, match) => {
-      this.commandHandlers.handleEcho(msg, match);
-    });
-
-    this.bot.onText(/\/info/, (msg) => {
-      this.commandHandlers.handleInfo(msg);
-    });
-
-    this.bot.onText(/\/time/, (msg) => {
-      this.commandHandlers.handleTime(msg);
-    });
-
     // Обработчик всех сообщений
     this.bot.on('message', (msg) => {
       this.handleMessage(msg);
@@ -44,12 +34,12 @@ class TelegramBotApp {
 
     // Обработчик ошибок
     this.bot.on('polling_error', (error) => {
-      this.handlePollingError(error);
+      this.eventHandlers.handlePollingError(error);
     });
 
     // Обработчик успешного запуска
     this.bot.on('polling_start', () => {
-      this.handlePollingStart();
+      this.eventHandlers.handlePollingStart();
     });
   }
 
@@ -73,17 +63,10 @@ class TelegramBotApp {
     this.bot.sendMessage(chatId, '✅ Получил ваше сообщение! Спасибо за обращение.');
   }
 
-  handlePollingError(error) {
-    console.error('Ошибка поллинга:', error);
-  }
 
-  handlePollingStart() {
-    console.log('🤖 Бот запущен и использует поллинг...');
-    console.log('📱 Бот готов к работе!');
-  }
 
   stop() {
-    console.log('🛑 Останавливаю бота...');
+    this.eventHandlers.handlePollingStop();
     this.bot.stopPolling();
   }
 
