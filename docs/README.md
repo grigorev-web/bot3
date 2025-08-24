@@ -36,6 +36,8 @@ related_files: [src/app/app.js, src/handlers/index.js]
 ### 🏗️ Архитектура
 - [Обзор архитектуры](architecture/overview.md)
 - [Структура проекта](architecture/structure.md)
+- [Структура модулей](architecture/modules-structure.md)
+- [Конфигурация моделей](architecture/models.md)
 - [Потоки данных](architecture/data-flow.md)
 - [Ключевые решения](architecture/decisions.md)
 
@@ -78,6 +80,7 @@ related_files: [src/app/app.js, src/handlers/index.js]
 ### По функциональности
 - **Обработка сообщений**: [message-handling](guides/message-handling.md)
 - **Модули**: [module-configuration](guides/module-configuration.md)
+- **LLM модели**: [models](architecture/models.md)
 - **Конфигурация**: [configuration](getting-started/configuration.md)
 - **Логирование**: [logging](guides/logging-debugging.md)
 
