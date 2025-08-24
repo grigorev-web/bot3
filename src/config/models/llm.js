@@ -2,7 +2,7 @@
  * @fileoverview Конфигурация LLM сервиса
  * @description Настройки для различных провайдеров LLM API
  * @author Telegram Bot Team
- * @version 2.0.0
+ * @version 4.0.0
  * @since 2024-01-01
  */
 

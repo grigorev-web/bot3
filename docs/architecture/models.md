@@ -20,13 +20,26 @@ related_files: [src/config/models.js, src/services/llm/llmService.js]
 ### Основные компоненты
 
 ```javascript
-src/config/models.js
-├── AVAILABLE_MODELS          # Мапа всех моделей
-├── MODELS_BY_PROVIDER       # Группировка по провайдерам
-├── MODELS_BY_CATEGORY       # Группировка по категориям
-├── MODELS_BY_LANGUAGE       # Группировка по языкам
-├── ModelManager             # Класс для работы с моделями
-└── modelManager             # Готовый экземпляр менеджера
+src/config/models/
+├── index.js           # Экспорт всех настроек
+├── models.js          # Мапа доступных LLM моделей
+└── llm.js             # Конфигурация LLM сервиса
+```
+
+### Импорт и использование
+
+```javascript
+// Импорт всех настроек
+const models = require('./src/config/models');
+
+// Доступ к менеджеру моделей
+const { modelManager } = models;
+
+// Доступ к конфигурации LLM
+const { llmConfig } = models;
+
+// Удобные геттеры
+const { getDefaultProvider, getProviderConfig } = models;
 ```
 
 ## 📋 Доступные модели
@@ -181,7 +194,17 @@ const stats = modelManager.getModelStats();
  */
 ```
 
-## 🚀 Использование
+## �� Использование
+
+### Импорт конфигурации
+
+```javascript
+// Основной импорт
+const models = require('./src/config/models');
+
+// Или через основной индекс конфигурации
+const { models } = require('./src/config');
+```
 
 ### В роутере
 
@@ -199,27 +222,33 @@ const temperature = modelConfig.temperature;
 ### В LLM сервисе
 
 ```javascript
-const { modelManager } = require('../config/models');
+const { modelManager, llmConfig } = require('../config/models');
 
 // Валидация модели
 if (!modelManager.modelExists(modelId)) {
   throw new Error(`Модель ${modelId} не найдена`);
 }
 
-// Получение конфигурации
+// Получение конфигурации модели
 const config = modelManager.getModel(modelId);
+
+// Получение настроек LLM
+const providerConfig = llmConfig.providers[config.provider];
 ```
 
 ### В конфигурации
 
 ```javascript
-const { AVAILABLE_MODELS } = require('./models');
+const { AVAILABLE_MODELS, llmConfig } = require('./models');
 
 // Проверка доступности модели
 const isAvailable = 'gpt-4' in AVAILABLE_MODELS;
 
 // Получение списка провайдеров
-const providers = Object.keys(MODELS_BY_PROVIDER);
+const providers = Object.keys(llmConfig.providers);
+
+// Получение настроек по умолчанию
+const defaultProvider = llmConfig.defaultProvider;
 ```
 
 ## 🔍 Группировки

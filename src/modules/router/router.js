@@ -71,7 +71,7 @@ class SimpleRouter {
       console.log('🚀 Создаю LLM сервис...');
       
       // Динамически импортируем LLM сервис
-      const { LLMService } = require('../../services');
+      const { LLMService } = require('../../services/llm');
       
       // Создаем сервис
       const service = new LLMService();
