@@ -2,24 +2,15 @@
  * @fileoverview Простой роутер с LLM
  * @description Создает LLM сервис, делает запрос и возвращает ответ
  * @author Telegram Bot Team
- * @version 4.0.0
+ * @version 4.1.0
  * @since 2024-01-01
  */
 
-/**
- * @class Router
- * @description Простой роутер, который использует LLM для обработки сообщений
- * @example
- * const router = new Router();
- * const response = await router.processText('Привет');
- */
+const { LLMService } = require('../../services/llm');
+
 class Router {
-  /**
-   * @constructor
-   */
-  constructor() {
-    this.llmService = null;
-    console.log('🔧 Router инициализирован');
+  constructor(msg) {
+    this.msg = msg;
   }
 
   /**
@@ -36,55 +27,23 @@ class Router {
 
       console.log(`📝 Обрабатываю текст через LLM: "${text}"`);
       
-      // Создаем LLM сервис если его нет
-      if (!this.llmService) {
-        this.llmService = await this.createLLMService();
+      // Создаем новый LLM сервис для каждого запроса
+      const llmService = new LLMService();
+      
+      // Делаем запрос к LLM
+      const response = await llmService.generateResponse(text);
+      if (response && response.content) {
+        console.log('✅ Получен ответ от LLM');
+        return response.content;
       }
       
-      if (this.llmService) {
-        // Делаем запрос к LLM
-        const response = await this.llmService.generateResponse(text);
-        if (response && response.content) {
-          console.log('✅ Получен ответ от LLM');
-          return response.content;
-        }
-      }
-      
-      // Fallback если LLM недоступен
-      console.log('⚠️ LLM недоступен, использую fallback');
+      // Fallback если LLM не дал ответ
+      console.log('⚠️ LLM не дал ответ, использую fallback');
       return this.getDefaultResponse(text);
       
     } catch (error) {
       console.error('❌ Ошибка обработки текста:', error);
       return this.getErrorResponse(error);
-    }
-  }
-
-  /**
-   * @group LLM Service Creation
-   * @description Создает LLM сервис
-   * @returns {Promise<Object|null>} LLM сервис или null если недоступен
-   * @private
-   */
-  async createLLMService() {
-    try {
-      console.log('🚀 Создаю LLM сервис...');
-      
-      // Динамически импортируем LLM сервис
-      const { LLMService } = require('../../services/llm');
-      
-      // Создаем сервис
-      const service = new LLMService();
-      
-      // Инициализируем сервис
-      await service.initialize();
-      
-      console.log('✅ LLM сервис создан и готов к работе');
-      return service;
-      
-    } catch (error) {
-      console.warn('⚠️ Не удалось создать LLM сервис:', error.message);
-      return null;
     }
   }
 
@@ -101,36 +60,13 @@ class Router {
 
   /**
    * @group Error Handling
-   * @description Генерирует ответ об ошибке
+   * @description Возвращает сообщение об ошибке
    * @param {Error} error - Объект ошибки
    * @returns {string} Сообщение об ошибке
    * @private
    */
   getErrorResponse(error) {
     return `❌ Произошла ошибка при обработке вашего сообщения:\n🔍 ${error.message}\n\n💡 Попробуйте позже или обратитесь к администратору.`;
-  }
-
-  /**
-   * @group Accessors
-   * @description Проверяет готовность роутера к работе
-   * @returns {boolean} true если роутер готов, false в противном случае
-   */
-  isReady() {
-    return this.llmService !== null;
-  }
-
-  /**
-   * @group Accessors
-   * @description Возвращает информацию о роутере
-   * @returns {Object} Информация о роутере
-   */
-  getInfo() {
-    return {
-      name: 'Simple Router with LLM',
-      version: '4.0.0',
-      isReady: this.isReady(),
-      hasLLM: !!this.llmService
-    };
   }
 }
 

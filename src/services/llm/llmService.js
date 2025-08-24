@@ -2,7 +2,7 @@
  * @fileoverview Сервис для работы с LLM (Large Language Models)
  * @description Обеспечивает взаимодействие с ProxyAPI для классификации и обработки текста
  * @author Telegram Bot Team
- * @version 2.0.0
+ * @version 3.0.0
  * @since 2024-01-01
  */
 
@@ -64,10 +64,8 @@ class LLMService {
     
     this.validateConfig(config);
     this.config = { ...config };
-    this.isInitialized = false;
-    this.apiAvailable = false;
     
-    console.log('🔧 LLMService инициализирован');
+    console.log('🔧 LLMService создан');
   }
 
   /**
@@ -147,78 +145,6 @@ class LLMService {
   }
 
   /**
-   * @group Initialization
-   * @description Инициализирует LLM сервис
-   * @returns {Promise<boolean>} true если инициализация успешна
-   */
-  async initialize() {
-    try {
-      console.log('🚀 Инициализация LLM сервиса...');
-      
-      // Проверяем доступность API
-      const connectionTest = await this.testConnection();
-      
-      if (connectionTest) {
-        this.isInitialized = true;
-        console.log('✅ LLM сервис успешно инициализирован');
-      } else {
-        console.warn('⚠️ LLM сервис инициализирован в режиме fallback (без API)');
-        // Устанавливаем флаг инициализации даже при неудачном тесте
-        this.isInitialized = true;
-      }
-      
-      return true;
-    } catch (error) {
-      console.error('❌ Ошибка инициализации LLM сервиса:', error);
-      // В случае ошибки все равно устанавливаем флаг
-      this.isInitialized = true;
-      return false;
-    }
-  }
-
-  /**
-   * @group Connection Testing
-   * @description Тестирует соединение с LLM API
-   * @returns {Promise<boolean>} true если соединение установлено
-   * @private
-   */
-  async testConnection() {
-    try {
-      console.log('🔍 Тестирую соединение с LLM API...');
-      
-      // Создаем простой тестовый запрос
-      const testRequest = {
-        prompt: 'Тест соединения',
-        systemPrompt: 'Ты - тестовый бот. Ответь одним словом: "OK"',
-        context: [],
-        options: {
-          maxTokens: 5,
-          temperature: 0.1,
-          timeout: 10000
-        }
-      };
-      
-      // Прямой вызов API без проверки инициализации
-      const testResponse = await this.callLLMAPI(testRequest);
-      
-      if (testResponse && testResponse.content) {
-        console.log('✅ Соединение с LLM API установлено');
-        console.log('📝 Тестовый ответ:', testResponse.content);
-        this.apiAvailable = true;
-        return true;
-      } else {
-        throw new Error('Пустой ответ от LLM API');
-      }
-      
-    } catch (error) {
-      console.warn('⚠️ Тест соединения не удался:', error.message);
-      this.apiAvailable = false;
-      // Не бросаем ошибку, просто возвращаем false
-      return false;
-    }
-  }
-
-  /**
    * @group Text Generation
    * @description Генерирует ответ с помощью LLM
    * @param {string} prompt - Текст запроса
@@ -226,10 +152,6 @@ class LLMService {
    * @returns {Promise<LLMResponse>} Ответ от LLM
    */
   async generateResponse(prompt, options = {}) {
-    if (!this.isInitialized) {
-      throw new Error('LLM сервис не инициализирован. Вызовите initialize()');
-    }
-
     try {
       const startTime = Date.now();
       
@@ -539,24 +461,6 @@ class LLMService {
 
   /**
    * @group Accessors
-   * @description Возвращает статус инициализации
-   * @returns {boolean} true если сервис инициализирован
-   */
-  isReady() {
-    return this.isInitialized;
-  }
-
-  /**
-   * @group Accessors
-   * @description Проверяет доступность API
-   * @returns {boolean} true если API доступен
-   */
-  isAPIAvailable() {
-    return this.isInitialized && this.apiAvailable;
-  }
-
-  /**
-   * @group Accessors
    * @description Возвращает конфигурацию сервиса
    * @returns {LLMConfig} Конфигурация (без API ключа)
    */
@@ -567,16 +471,14 @@ class LLMService {
   }
 
   /**
-   * @group Accessors
+   * @group Service Info
    * @description Возвращает информацию о сервисе
    * @returns {Object} Информация о сервисе
    */
-  getInfo() {
+  getServiceInfo() {
     return {
       name: 'ProxyAPI Service',
       version: '2.0.0',
-      isReady: this.isInitialized,
-      isAPIAvailable: this.apiAvailable,
       model: this.config.model,
       apiUrl: this.config.apiUrl
     };

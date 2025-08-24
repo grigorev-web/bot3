@@ -6,6 +6,8 @@
  * @since 2024-01-01
  */
 
+const { Router } = require('../modules/router');
+
 /**
  * @typedef {Object} TextMessage
  * @property {number} chat.id - ID чата
@@ -46,21 +48,8 @@ class TextMessageHandler {
       }
       
       // Обрабатываем текст через роутер
-      let response;
-      try {
-        const { Router } = require('../modules/router');
-        const router = new Router();
-        
-        response = await router.processText(text);
-      } catch (error) {
-        console.warn('⚠️ Роутер недоступен, использую fallback:', error.message);
-        response = this.getDefaultResponse(text);
-      }
-      
-      // Если роутер не дал ответ, используем fallback
-      if (!response) {
-        response = this.getDefaultResponse(text);
-      }
+      const router = new Router(msg);
+      let response = await router.processText(text);
       
       // Отправляем ответ пользователю
       await this.sendResponse(chatId, response);
@@ -132,30 +121,6 @@ class TextMessageHandler {
     } catch (sendError) {
       console.error('❌ Не удалось отправить сообщение об ошибке:', sendError);
     }
-  }
-
-  /**
-   * @group Fallback Responses
-   * @description Возвращает стандартный ответ если роутер недоступен
-   * @param {string} text - Исходный текст пользователя
-   * @returns {string} Стандартный ответ
-   * @private
-   */
-  getDefaultResponse(text) {
-    // Простые правила без роутера
-    if (/(привет|здравствуй|hi|hello)/i.test(text)) {
-      return 'Привет! 👋 Чем могу помочь?';
-    }
-    
-    if (/(как дела|как ты|how are you)/i.test(text)) {
-      return 'Спасибо, у меня все хорошо! 😊 А у вас как дела?';
-    }
-    
-    if (/(спасибо|благодарю|thanks)/i.test(text)) {
-      return 'Пожалуйста! Рад быть полезным! 🙏';
-    }
-    
-    return 'Получил ваше сообщение! 📝 Спасибо за обращение.';
   }
 }
 
