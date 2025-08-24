@@ -7,19 +7,19 @@
  */
 
 /**
- * @class SimpleRouter
+ * @class Router
  * @description Простой роутер, который использует LLM для обработки сообщений
  * @example
- * const router = new SimpleRouter();
+ * const router = new Router();
  * const response = await router.processText('Привет');
  */
-class SimpleRouter {
+class Router {
   /**
    * @constructor
    */
   constructor() {
     this.llmService = null;
-    console.log('🔧 SimpleRouter инициализирован');
+    console.log('🔧 Router инициализирован');
   }
 
   /**
@@ -134,4 +134,4 @@ class SimpleRouter {
   }
 }
 
-module.exports = SimpleRouter;
+module.exports = Router;

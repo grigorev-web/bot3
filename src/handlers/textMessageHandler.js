@@ -2,7 +2,7 @@
  * @fileoverview Обработчик текстовых сообщений Telegram бота
  * @description Обрабатывает текстовые сообщения пользователей через простой роутер
  * @author Telegram Bot Team
- * @version 3.0.0
+ * @version 3.1.0
  * @since 2024-01-01
  */
 
@@ -16,27 +16,14 @@
 /**
  * @class TextMessageHandler
  * @description Простой класс для обработки текстовых сообщений через роутер
- * @example
- * const textHandler = new TextMessageHandler(bot);
- * if (textHandler.canHandle(message)) {
- *   textHandler.handleTextMessage(message);
- * }
  */
 class TextMessageHandler {
   /**
    * @constructor
    * @param {Object} bot - Экземпляр Telegram бота
-   * @throws {Error} Если экземпляр бота не передан
    */
   constructor(bot) {
-    if (!bot) {
-      throw new Error('Экземпляр бота обязателен для TextMessageHandler');
-    }
-    
     this.bot = bot;
-    this.router = null; // Ленивая загрузка роутера
-    
-    console.log('🔧 TextMessageHandler инициализирован');
   }
 
   /**
@@ -58,13 +45,26 @@ class TextMessageHandler {
         return false;
       }
       
-      // Обрабатываем текст через роутер (ленивая загрузка)
-      const response = await this.processTextWithRouter(text);
+      // Обрабатываем текст через роутер
+      let response;
+      try {
+        const { Router } = require('../modules/router');
+        const router = new Router();
+        
+        response = await router.processText(text);
+      } catch (error) {
+        console.warn('⚠️ Роутер недоступен, использую fallback:', error.message);
+        response = this.getDefaultResponse(text);
+      }
+      
+      // Если роутер не дал ответ, используем fallback
+      if (!response) {
+        response = this.getDefaultResponse(text);
+      }
       
       // Отправляем ответ пользователю
       await this.sendResponse(chatId, response);
-      
-      console.log(`✅ Текстовое сообщение успешно обработано для чата ${chatId}`);
+
       return true;
       
     } catch (error) {
@@ -81,7 +81,6 @@ class TextMessageHandler {
    * @returns {boolean} true если сообщение можно обработать, false в противном случае
    */
   canHandle(msg) {
-    // Проверяем наличие текста и что это не команда
     return msg.text && !this.isCommand(msg.text);
   }
 
@@ -94,62 +93,6 @@ class TextMessageHandler {
    */
   isCommand(text) {
     return text.startsWith('/');
-  }
-
-  /**
-   * @group Text Processing
-   * @description Обрабатывает текст через роутер (ленивая загрузка)
-   * @param {string} text - Текст для обработки
-   * @returns {Promise<string>} Ответ от роутера
-   * @private
-   */
-  async processTextWithRouter(text) {
-    try {
-      // Ленивая загрузка роутера
-      if (!this.router) {
-        this.router = await this.createRouter();
-      }
-      
-      if (this.router) {
-        // Получаем ответ от роутера
-        const response = await this.router.processText(text);
-        if (response) {
-          return response;
-        }
-      }
-      
-      // Fallback ответ если роутер недоступен
-      return this.getDefaultResponse(text);
-      
-    } catch (error) {
-      console.warn('⚠️ Роутер недоступен, использую fallback:', error.message);
-      return this.getDefaultResponse(text);
-    }
-  }
-
-  /**
-   * @group Router Creation
-   * @description Создает роутер при необходимости
-   * @returns {Promise<Object|null>} Роутер или null если недоступен
-   * @private
-   */
-  async createRouter() {
-    try {
-      console.log('🚀 Создаю роутер...');
-      
-      // Динамически импортируем роутер
-      const { SimpleRouter } = require('../modules/router');
-      
-      // Создаем роутер
-      const router = new SimpleRouter();
-      
-      console.log('✅ Роутер создан и готов к работе');
-      return router;
-      
-    } catch (error) {
-      console.warn('⚠️ Не удалось создать роутер:', error.message);
-      return null;
-    }
   }
 
   /**
@@ -213,32 +156,6 @@ class TextMessageHandler {
     }
     
     return 'Получил ваше сообщение! 📝 Спасибо за обращение.';
-  }
-
-  /**
-   * @group Accessors
-   * @description Возвращает информацию о модуле
-   * @returns {Object} Информация о модуле
-   */
-  getModuleInfo() {
-    return {
-      name: 'Text Message Handler',
-      version: '3.0.0',
-      hasRouter: !!this.router,
-      routerStatus: this.router ? 'ready' : 'not_loaded'
-    };
-  }
-
-  /**
-   * @group Accessors
-   * @description Возвращает статистику обработки
-   * @returns {Object} Статистика
-   */
-  getStats() {
-    return {
-      hasRouter: !!this.router,
-      routerStatus: this.router ? 'ready' : 'not_loaded'
-    };
   }
 }
 

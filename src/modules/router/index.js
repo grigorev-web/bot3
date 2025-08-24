@@ -6,7 +6,7 @@
  * @since 2024-01-01
  */
 
-const SimpleRouter = require('./router');
+const Router = require('./router');
 
 /**
  * @module router
@@ -14,8 +14,8 @@ const SimpleRouter = require('./router');
  */
 module.exports = {
   /**
-   * @type {SimpleRouter}
+   * @type {Router}
    * @description Простой роутер для обработки сообщений
    */
-  SimpleRouter
+  Router
 };

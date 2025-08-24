@@ -1,19 +1,22 @@
 /**
- * @fileoverview Основной индексный файл конфигурации
- * @description Экспортирует все настройки проекта
- * @author Telegram Bot Team
- * @version 4.0.0
- * @since 2024-01-01
+ * @fileoverview Главный индекс конфигурации приложения
+ * @description Экспортирует все конфигурационные модули
+ * @author Bot3 Development Team
+ * @version 2.0.0
  */
 
-const development = require('./development');
-const models = require('./models');
-
+// Экспортируем основную конфигурацию
 module.exports = {
-  development,
-  models,
+  development: require('./development'),
+  
+  // LLM конфигурация
+  llmConfig: require('./llm'),
+  
+  // Модели и менеджер
+  modelManager: require('./models').modelManager,
+  AVAILABLE_MODELS: require('./models').AVAILABLE_MODELS,
   
   // Удобные геттеры
-  getDevelopmentConfig: () => development,
-  getModelsConfig: () => models
+  getDefaultProvider: () => require('./llm').defaultProvider,
+  getProviderConfig: (provider) => require('./llm')[provider]
 };
