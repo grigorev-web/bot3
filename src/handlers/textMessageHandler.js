@@ -48,12 +48,9 @@ class TextMessageHandler {
       }
       
       // Обрабатываем текст через роутер
-      const router = new Router(msg);
-      let response = await router.processText(text);
+      const router = new Router(this.bot, msg);
+      router.run();
       
-      // Отправляем ответ пользователю
-      await this.sendResponse(chatId, response);
-
       return true;
       
     } catch (error) {
